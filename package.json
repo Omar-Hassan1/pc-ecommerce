@@ -1,0 +1,10 @@
+{
+  "name": "nexora-computers",
+  "version": "1.0.0",
+  "description": "NEXORA COMPUTERS - Production Computer E-Commerce & Repair Service Platform",
+  "scripts": {
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm run dev",
+    "seed": "cd server && npm run seed"
+  }
+}
