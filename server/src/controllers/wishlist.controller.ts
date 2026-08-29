@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { Wishlist, WishlistItem, Product, ProductImage } from '../models';
-import { sendSuccess, sendError } from '../utils/response.handler';
+import { sendSuccess } from '../utils/response.handler';
 
 export const getWishlist = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   try {

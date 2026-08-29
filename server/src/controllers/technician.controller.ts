@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { RepairRequest, RepairQuote, RepairQuoteItem, RepairStatusHistory, TechnicianAssignment, User, sequelize } from '../models';
+import { RepairRequest, RepairQuote, RepairQuoteItem, RepairStatusHistory, sequelize } from '../models';
 import { sendSuccess, sendError } from '../utils/response.handler';
 
 export const getAssignedRepairs = async (req: Request, res: Response, next: NextFunction): Promise<any> => {

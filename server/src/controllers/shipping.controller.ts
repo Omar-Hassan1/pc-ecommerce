@@ -15,7 +15,7 @@ export const getShippingMethods = async (req: Request, res: Response, next: Next
 
 export const calculateShippingRate = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   try {
-    const { country, weight = 1.0, orderTotal = 0 } = req.body;
+    const { _country, weight = 1.0, orderTotal = 0 } = req.body;
 
     const methods = await ShippingMethod.findAll({ where: { isActive: true } });
 

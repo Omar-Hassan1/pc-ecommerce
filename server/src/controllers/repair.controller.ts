@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { RepairRequest, RepairFile, RepairStatusHistory, RepairQuote, RepairQuoteItem, RepairMessage, User, sequelize } from '../models';
+import { RepairRequest, RepairFile, RepairStatusHistory, RepairQuote, RepairQuoteItem, RepairMessage, sequelize } from '../models';
 import { sendSuccess, sendError } from '../utils/response.handler';
 import { generateRepairNumber } from '../utils/helpers.util';
 

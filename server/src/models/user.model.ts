@@ -1,5 +1,6 @@
-import { DataTypes, Model } from 'sequelize';
+import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/database.config';
+import argon2 from 'argon2';
 import bcrypt from 'bcryptjs';
 
 export const User: any = sequelize.define('User', {
@@ -57,22 +58,37 @@ export const User: any = sequelize.define('User', {
   timestamps: true,
   hooks: {
     beforeCreate: async (user: any) => {
-      if (user.password) {
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(user.password, salt);
+      if (user.password && !user.password.startsWith('$argon2id$')) {
+        user.password = await argon2.hash(user.password, { type: argon2.argon2id });
       }
     },
     beforeUpdate: async (user: any) => {
-      if (user.changed('password')) {
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(user.password, salt);
+      if (user.changed('password') && !user.password.startsWith('$argon2id$')) {
+        user.password = await argon2.hash(user.password, { type: argon2.argon2id });
       }
     }
   }
 });
 
 User.prototype.comparePassword = async function (candidatePassword: string): Promise<boolean> {
-  return await bcrypt.compare(candidatePassword, this.password);
+  try {
+    if (this.password && this.password.startsWith('$argon2id$')) {
+      return await argon2.verify(this.password, candidatePassword);
+    }
+    if (this.password && (this.password.startsWith('$2a$') || this.password.startsWith('$2b$') || this.password.startsWith('$2y$'))) {
+      const isMatch = await bcrypt.compare(candidatePassword, this.password);
+      if (isMatch) {
+        // Gradual migration: rehash with Argon2id and update database
+        const newHash = await argon2.hash(candidatePassword, { type: argon2.argon2id });
+        this.password = newHash;
+        await this.save();
+      }
+      return isMatch;
+    }
+    return await argon2.verify(this.password, candidatePassword);
+  } catch {
+    return false;
+  }
 };
 
 User.prototype.toPublicJSON = function () {

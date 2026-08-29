@@ -22,6 +22,9 @@ export const createPaymentIntent = async (req: Request, res: Response, next: Nex
     return sendSuccess(res, {
       clientSecret: `dev_client_secret_${Date.now()}_${Math.random().toString(36).substring(7)}`,
       provider: 'DevSandbox',
+      amount,
+      currency,
+      orderId,
       message: 'Development payment sandbox active. Set valid STRIPE_SECRET_KEY in server/.env for production Stripe processing.'
     });
   } catch (error) {

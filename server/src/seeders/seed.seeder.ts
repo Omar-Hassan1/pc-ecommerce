@@ -1,5 +1,4 @@
 import {
-  sequelize,
   User,
   Category,
   Brand,
@@ -31,7 +30,7 @@ export const seedDatabase = async (): Promise<void> => {
     logger.info('[Seeder] Seeding database with realistic NEXORA COMPUTERS data...');
 
     // 1. Create Default Users (Admin, Technician, Customer)
-    const admin = await User.create({
+    await User.create({
       firstName: 'Omar',
       lastName: 'Admin',
       email: 'admin@nexora.com',
@@ -40,7 +39,7 @@ export const seedDatabase = async (): Promise<void> => {
       phone: '+1 (800) 555-0199'
     });
 
-    const technician = await User.create({
+    await User.create({
       firstName: 'Omar',
       lastName: 'Tech',
       email: 'tech@nexora.com',
@@ -72,23 +71,23 @@ export const seedDatabase = async (): Promise<void> => {
     const ramCat = await Category.create({ name: 'RAM', slug: 'ram', parentId: componentsCat.id });
     const ssdsCat = await Category.create({ name: 'Storage (SSDs)', slug: 'ssds', parentId: componentsCat.id });
     const psusCat = await Category.create({ name: 'Power Supplies', slug: 'power-supplies', parentId: componentsCat.id });
-    const casesCat = await Category.create({ name: 'PC Cases', slug: 'cases', parentId: componentsCat.id });
-    const coolingCat = await Category.create({ name: 'Cooling', slug: 'cooling', parentId: componentsCat.id });
+    await Category.create({ name: 'PC Cases', slug: 'cases', parentId: componentsCat.id });
+    await Category.create({ name: 'Cooling', slug: 'cooling', parentId: componentsCat.id });
 
     const accessoriesCat = await Category.create({ name: 'Accessories', slug: 'accessories', description: 'Gaming Keyboards, Mice, Monitors' });
-    const monitorsCat = await Category.create({ name: 'Monitors', slug: 'monitors', parentId: accessoriesCat.id });
-    const keyboardsCat = await Category.create({ name: 'Keyboards', slug: 'keyboards', parentId: accessoriesCat.id });
+    await Category.create({ name: 'Monitors', slug: 'monitors', parentId: accessoriesCat.id });
+    await Category.create({ name: 'Keyboards', slug: 'keyboards', parentId: accessoriesCat.id });
 
     // 3. Create Brands
     const asus = await Brand.create({ name: 'ASUS', slug: 'asus', description: 'ROG Strix & TUF Gaming' });
-    const msi = await Brand.create({ name: 'MSI', slug: 'msi', description: 'Dragon Gaming Performance' });
-    const gigabyte = await Brand.create({ name: 'Gigabyte', slug: 'gigabyte', description: 'AORUS & Gaming Components' });
+    await Brand.create({ name: 'MSI', slug: 'msi', description: 'Dragon Gaming Performance' });
+    await Brand.create({ name: 'Gigabyte', slug: 'gigabyte', description: 'AORUS & Gaming Components' });
     const amd = await Brand.create({ name: 'AMD', slug: 'amd', description: 'Ryzen Processors & Radeon Graphics' });
-    const intel = await Brand.create({ name: 'Intel', slug: 'intel', description: 'Core Ultra & Core Processors' });
+    await Brand.create({ name: 'Intel', slug: 'intel', description: 'Core Ultra & Core Processors' });
     const nvidia = await Brand.create({ name: 'NVIDIA', slug: 'nvidia', description: 'GeForce RTX Graphics' });
     const corsair = await Brand.create({ name: 'Corsair', slug: 'corsair', description: 'High Performance RAM, Power & Cases' });
     const samsung = await Brand.create({ name: 'Samsung', slug: 'samsung', description: 'NVMe SSDs & QD-OLED Gaming Monitors' });
-    const logitech = await Brand.create({ name: 'Logitech G', slug: 'logitech', description: 'PRO Wireless Gear' });
+    await Brand.create({ name: 'Logitech G', slug: 'logitech', description: 'PRO Wireless Gear' });
 
     // 4. Create Shipping Methods
     await ShippingMethod.create({

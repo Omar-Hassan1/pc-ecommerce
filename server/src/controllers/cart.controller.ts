@@ -15,7 +15,7 @@ export const getCart = async (req: Request, res: Response, next: NextFunction): 
       return sendSuccess(res, { items: [], subtotal: 0 });
     }
 
-    let cart = await Cart.findOne({
+    const cart = await Cart.findOne({
       where: whereClause,
       include: [
         {

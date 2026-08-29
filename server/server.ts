@@ -1,5 +1,5 @@
 import app from './src/app';
-import { sequelize, verifyAndConnect } from './src/config/database.config';
+import { verifyAndConnect } from './src/config/database.config';
 import logger from './src/config/logger.config';
 import dotenv from 'dotenv';
 

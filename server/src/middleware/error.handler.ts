@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { sendError } from '../utils/response.handler';
 import logger from '../config/logger.config';
 
-export const notFoundHandler = (req: Request, res: Response, next: NextFunction): Response => {
+export const notFoundHandler = (req: Request, res: Response, _next: NextFunction): Response => {
   return sendError(res, `Route not found - ${req.originalUrl}`, 404);
 };
 
@@ -10,7 +10,7 @@ export const globalErrorHandler = (
   err: any,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ): Response => {
   logger.error({ err, path: req.originalUrl, method: req.method }, '[Error Handler]');
 
