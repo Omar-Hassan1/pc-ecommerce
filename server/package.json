@@ -7,6 +7,9 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "dev": "tsx watch server.ts",
+    "db:migrate": "tsx src/migrations/runner.ts up",
+    "db:migrate:undo": "tsx src/migrations/runner.ts down",
+    "seedDatabase": "tsx src/seeders/seed.seeder.ts",
     "seed": "tsx src/seeders/seed.seeder.ts"
   },
   "dependencies": {
@@ -36,6 +39,7 @@
     "@types/pg": "^8.23.1",
     "nodemon": "^3.1.4",
     "tsx": "^4.23.12",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "umzug": "^3.8.3"
   }
 }

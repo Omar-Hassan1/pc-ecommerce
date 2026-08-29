@@ -36,11 +36,11 @@ if (dialect === 'postgres') {
   });
 }
 
-// Graceful connection check with fallback to sqlite if postgres is not active locally
-const testAndConnect = async (): Promise<void> => {
+// Connection verification logic per requirement #6
+const verifyAndConnect = async (): Promise<void> => {
   try {
     await sequelize.authenticate();
-    logger.info(`[Database] Connected successfully using ${sequelize.getDialect().toUpperCase()} dialect.`);
+    logger.info(`[Database] Connection verified successfully using ${sequelize.getDialect().toUpperCase()} dialect.`);
   } catch (error: any) {
     if (dialect === 'postgres') {
       logger.warn(`[Database Warning] PostgreSQL connection failed: (${error?.message || error}). Falling back to SQLite for seamless execution.`);
@@ -50,11 +50,12 @@ const testAndConnect = async (): Promise<void> => {
         logging: false
       });
       await sequelize.authenticate();
-      logger.info(`[Database] Connected using fallback SQLite dialect.`);
+      logger.info(`[Database] Connection verified using fallback SQLite dialect.`);
     } else {
+      logger.error({ error }, '[Database Error] Database connection verification failed.');
       throw error;
     }
   }
 };
 
-export { sequelize, testAndConnect };
+export { sequelize, verifyAndConnect };

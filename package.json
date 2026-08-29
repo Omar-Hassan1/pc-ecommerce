@@ -5,6 +5,8 @@
   "scripts": {
     "server": "cd server && npm run dev",
     "client": "cd client && npm run dev",
+    "db:migrate": "cd server && npm run db:migrate",
+    "seedDatabase": "cd server && npm run seedDatabase",
     "seed": "cd server && npm run seed"
   }
 }

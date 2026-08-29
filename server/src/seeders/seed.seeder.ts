@@ -14,13 +14,12 @@ import {
   RepairQuoteItem,
   RepairStatusHistory
 } from '../models';
-import { testAndConnect } from '../config/database.config';
+import { verifyAndConnect } from '../config/database.config';
 import logger from '../config/logger.config';
 
 export const seedDatabase = async (): Promise<void> => {
   try {
-    await testAndConnect();
-    await sequelize.sync({ force: true });
+    await verifyAndConnect();
 
     const userCount = await User.count();
 

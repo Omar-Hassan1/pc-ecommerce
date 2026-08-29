@@ -1,6 +1,5 @@
 import app from './src/app';
-import { sequelize, testAndConnect } from './src/config/database.config';
-import { seedDatabase } from './src/seeders/seed.seeder';
+import { sequelize, verifyAndConnect } from './src/config/database.config';
 import logger from './src/config/logger.config';
 import dotenv from 'dotenv';
 
@@ -10,15 +9,8 @@ const PORT = process.env.PORT || 5000;
 
 const startServer = async (): Promise<void> => {
   try {
-    // Authenticate database connection
-    await testAndConnect();
-
-    // Sync Sequelize models
-    await sequelize.sync({ alter: false });
-    logger.info('[Database] Models synchronized successfully.');
-
-    // Auto-seed if database is empty
-    await seedDatabase();
+    // Verify database connection per requirement #6
+    await verifyAndConnect();
 
     app.listen(PORT, () => {
       logger.info(`====================================================`);
