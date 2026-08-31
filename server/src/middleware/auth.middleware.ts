@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { User } from '../models';
-import { sendError } from '../utils/response.handler';
+import { UnauthorizedError, ForbiddenError } from '../errors';
 
-export const protect = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+export const protect = async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
   let token: string | undefined;
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
@@ -11,7 +11,7 @@ export const protect = async (req: Request, res: Response, next: NextFunction): 
   }
 
   if (!token) {
-    return sendError(res, 'Not authorized, token missing', 401);
+    return next(new UnauthorizedError('Not authorized, token missing'));
   }
 
   try {
@@ -23,25 +23,27 @@ export const protect = async (req: Request, res: Response, next: NextFunction): 
     const user = await (User as any).findByPk(decoded.id);
 
     if (!user || !user.isActive) {
-      return sendError(res, 'User account is invalid or deactivated', 401);
+      return next(new UnauthorizedError('User account is invalid or deactivated'));
     }
 
     req.user = user;
     next();
   } catch (error) {
-    return sendError(res, 'Not authorized, token invalid or expired', 401);
+    return next(new UnauthorizedError('Not authorized, token invalid or expired'));
   }
 };
 
 // Role-based authorization middleware
 export const authorize = (...roles: string[]) => {
-  return (req: Request, res: Response, next: NextFunction): any => {
+  return (req: Request, _res: Response, next: NextFunction): void => {
     if (!req.user) {
-      return sendError(res, 'Not authenticated', 401);
+      return next(new UnauthorizedError('Not authenticated'));
     }
 
     if (!roles.includes(req.user.role)) {
-      return sendError(res, `User role '${req.user.role}' is not authorized to access this route`, 403);
+      return next(
+        new ForbiddenError(`User role '${req.user.role}' is not authorized to access this route`)
+      );
     }
 
     next();

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { RepairRequest, RepairQuote, RepairQuoteItem, RepairStatusHistory, sequelize } from '../models';
-import { sendSuccess, sendError } from '../utils/response.handler';
+import { sendSuccess } from '../utils/response.handler';
+import { NotFoundError } from '../errors';
 
 export const getAssignedRepairs = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   try {
@@ -25,8 +26,7 @@ export const updateRepairStatus = async (req: Request, res: Response, next: Next
 
     const repair = await RepairRequest.findByPk(repairId, { transaction });
     if (!repair) {
-      await transaction.rollback();
-      return sendError(res, 'Repair request not found', 404);
+      throw new NotFoundError('Repair request not found');
     }
 
     repair.status = status;
@@ -43,7 +43,9 @@ export const updateRepairStatus = async (req: Request, res: Response, next: Next
 
     return sendSuccess(res, repair, `Repair status updated to ${status}`);
   } catch (error) {
-    await transaction.rollback();
+    if (transaction && !(transaction as any).finished) {
+      await transaction.rollback();
+    }
     next(error);
   }
 };
@@ -64,8 +66,7 @@ export const createOrUpdateQuote = async (req: Request, res: Response, next: Nex
 
     const repair = await RepairRequest.findByPk(repairId, { transaction });
     if (!repair) {
-      await transaction.rollback();
-      return sendError(res, 'Repair request not found', 404);
+      throw new NotFoundError('Repair request not found');
     }
 
     let partsTotal = 0;
@@ -135,7 +136,9 @@ export const createOrUpdateQuote = async (req: Request, res: Response, next: Nex
 
     return sendSuccess(res, fullQuote, 'Quotation generated successfully', 201);
   } catch (error) {
-    await transaction.rollback();
+    if (transaction && !(transaction as any).finished) {
+      await transaction.rollback();
+    }
     next(error);
   }
 };

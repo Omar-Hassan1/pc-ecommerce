@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodSchema, ZodError } from 'zod';
-import { sendError } from '../utils/response.handler';
+import { ValidationError } from '../errors';
 
 export interface RequestValidationSchemas {
   body?: ZodSchema;
@@ -9,7 +9,7 @@ export interface RequestValidationSchemas {
 }
 
 export const validate = (schemas: RequestValidationSchemas) => {
-  return async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     try {
       if (schemas.body) {
         req.body = await schemas.body.parseAsync(req.body);
@@ -28,7 +28,7 @@ export const validate = (schemas: RequestValidationSchemas) => {
           const path = err.path ? err.path.join('.') : '';
           return path ? `${path}: ${err.message}` : err.message;
         });
-        return sendError(res, `Validation Error: ${errorMessages.join('; ')}`, 400, errorMessages);
+        return next(new ValidationError('Validation Error', errorMessages));
       }
       next(error);
     }

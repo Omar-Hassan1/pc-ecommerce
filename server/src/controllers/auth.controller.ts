@@ -1,7 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { User, Address } from '../models';
-import { sendSuccess, sendError } from '../utils/response.handler';
+import { sendSuccess } from '../utils/response.handler';
+import {
+  ConflictError,
+  UnauthorizedError,
+  ForbiddenError,
+  BadRequestError,
+  NotFoundError
+} from '../errors';
 
 const generateToken = (id: string): string => {
   return jwt.sign(
@@ -17,7 +24,7 @@ export const register = async (req: Request, res: Response, next: NextFunction):
 
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
-      return sendError(res, 'Email address is already registered', 400);
+      throw new ConflictError('Email address is already registered');
     }
 
     // Role safety check: Default to CUSTOMER unless created by admin or explicitly provided in dev
@@ -49,16 +56,16 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
 
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      return sendError(res, 'Invalid credentials', 401);
+      throw new UnauthorizedError('Invalid credentials');
     }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return sendError(res, 'Invalid credentials', 401);
+      throw new UnauthorizedError('Invalid credentials');
     }
 
     if (!user.isActive) {
-      return sendError(res, 'Account is deactivated', 403);
+      throw new ForbiddenError('Account is deactivated');
     }
 
     const token = generateToken(user.id);
@@ -77,6 +84,11 @@ export const getMe = async (req: Request, res: Response, next: NextFunction): Pr
     const user = await User.findByPk(req.user.id, {
       include: [{ model: Address, as: 'addresses' }]
     });
+
+    if (!user) {
+      throw new NotFoundError('User profile not found');
+    }
+
     return sendSuccess(res, user.toPublicJSON());
   } catch (error) {
     next(error);
@@ -87,6 +99,10 @@ export const updateProfile = async (req: Request, res: Response, next: NextFunct
   try {
     const { firstName, lastName, phone } = req.body;
     const user = await User.findByPk(req.user.id);
+
+    if (!user) {
+      throw new NotFoundError('User profile not found');
+    }
 
     if (firstName) user.firstName = firstName;
     if (lastName) user.lastName = lastName;
@@ -105,9 +121,13 @@ export const changePassword = async (req: Request, res: Response, next: NextFunc
     const { currentPassword, newPassword } = req.body;
     const user = await User.findByPk(req.user.id);
 
+    if (!user) {
+      throw new NotFoundError('User profile not found');
+    }
+
     const isMatch = await user.comparePassword(currentPassword);
     if (!isMatch) {
-      return sendError(res, 'Current password is incorrect', 400);
+      throw new BadRequestError('Current password is incorrect');
     }
 
     user.password = newPassword;

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { Review, Product, User } from '../models';
-import { sendSuccess, sendError } from '../utils/response.handler';
+import { sendSuccess } from '../utils/response.handler';
+import { NotFoundError } from '../errors';
 
 export const createReview = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   try {
@@ -8,7 +9,7 @@ export const createReview = async (req: Request, res: Response, next: NextFuncti
 
     const product = await Product.findByPk(productId);
     if (!product) {
-      return sendError(res, 'Product not found', 404);
+      throw new NotFoundError('Product not found');
     }
 
     const review = await Review.create({

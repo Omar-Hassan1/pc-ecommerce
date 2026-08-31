@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { Order, OrderItem, Product, Inventory, Payment, ShippingMethod, Coupon, CouponUsage, sequelize } from '../models';
-import { sendSuccess, sendError } from '../utils/response.handler';
+import { sendSuccess } from '../utils/response.handler';
 import { generateOrderNumber } from '../utils/helpers.util';
+import { BadRequestError, NotFoundError } from '../errors';
 
 export const createOrder = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const transaction = await sequelize.transaction();
@@ -19,7 +20,7 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
     } = req.body;
 
     if (!items || items.length === 0) {
-      return sendError(res, 'Order must contain at least one item', 400);
+      throw new BadRequestError('Order must contain at least one item');
     }
 
     let subtotal = 0;
@@ -29,13 +30,11 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
     for (const item of items) {
       const product = await Product.findByPk(item.productId, { transaction });
       if (!product || !product.isActive) {
-        await transaction.rollback();
-        return sendError(res, `Product ID ${item.productId} is not available`, 400);
+        throw new BadRequestError(`Product ID ${item.productId} is not available`);
       }
 
       if (product.stockQuantity < item.quantity) {
-        await transaction.rollback();
-        return sendError(res, `Insufficient stock for product: ${product.name}`, 400);
+        throw new BadRequestError(`Insufficient stock for product: ${product.name}`);
       }
 
       const unitPrice = parseFloat(product.salePrice || product.price);
@@ -96,7 +95,7 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
       }
     }
 
-    // Tax calculation (e.g. 8%)
+    // Tax calculation (8%)
     const taxAmount = (subtotal - discountAmount) * 0.08;
     const totalAmount = subtotal + shippingAmount + taxAmount - discountAmount;
 
@@ -153,7 +152,9 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
 
     return sendSuccess(res, { order, payment }, 'Order created successfully', 201);
   } catch (error) {
-    await transaction.rollback();
+    if (transaction && !(transaction as any).finished) {
+      await transaction.rollback();
+    }
     next(error);
   }
 };
@@ -191,7 +192,7 @@ export const trackOrder = async (req: Request, res: Response, next: NextFunction
     });
 
     if (!order) {
-      return sendError(res, 'Order not found with provided criteria', 404);
+      throw new NotFoundError('Order not found with provided criteria');
     }
 
     // Timeline stage tracking definition
@@ -230,8 +231,7 @@ export const updateOrderStatus = async (req: Request, res: Response, next: NextF
     });
 
     if (!order) {
-      await transaction.rollback();
-      return sendError(res, 'Order not found', 404);
+      throw new NotFoundError('Order not found');
     }
 
     // Restock inventory if order is cancelled
@@ -259,7 +259,9 @@ export const updateOrderStatus = async (req: Request, res: Response, next: NextF
 
     return sendSuccess(res, order, `Order status updated to ${status}`);
   } catch (error) {
-    await transaction.rollback();
+    if (transaction && !(transaction as any).finished) {
+      await transaction.rollback();
+    }
     next(error);
   }
 };

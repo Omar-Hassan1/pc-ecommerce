@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ContactMessage, NewsletterSubscriber } from '../models';
-import { sendSuccess, sendError } from '../utils/response.handler';
+import { sendSuccess } from '../utils/response.handler';
+import { BadRequestError } from '../errors';
 
 export const submitContactMessage = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   try {
@@ -25,7 +26,7 @@ export const subscribeNewsletter = async (req: Request, res: Response, next: Nex
     const { email } = req.body;
 
     if (!email) {
-      return sendError(res, 'Email address is required', 400);
+      throw new BadRequestError('Email address is required');
     }
 
     const [subscriber, created] = await NewsletterSubscriber.findOrCreate({

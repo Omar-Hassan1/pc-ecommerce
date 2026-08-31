@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { Product, Category, Brand, ProductImage, ProductSpecification, Review, Inventory, sequelize } from '../models';
 import { Op } from 'sequelize';
-import { sendSuccess, sendError } from '../utils/response.handler';
+import { sendSuccess } from '../utils/response.handler';
 import { slugify } from '../utils/helpers.util';
+import { NotFoundError } from '../errors';
 
 export const getProducts = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   try {
@@ -112,15 +113,16 @@ export const getProducts = async (req: Request, res: Response, next: NextFunctio
 export const getProductBySlug = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   try {
     const { identifier } = req.params;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(identifier);
+    const whereClause: any = { isActive: true };
+    if (isUuid) {
+      whereClause[Op.or] = [{ slug: identifier }, { id: identifier }];
+    } else {
+      whereClause.slug = identifier;
+    }
 
     const product = await Product.findOne({
-      where: {
-        [Op.or]: [
-          { slug: identifier },
-          { id: identifier }
-        ],
-        isActive: true
-      },
+      where: whereClause,
       include: [
         { model: Category, as: 'category' },
         { model: Brand, as: 'brand' },
@@ -135,7 +137,7 @@ export const getProductBySlug = async (req: Request, res: Response, next: NextFu
     });
 
     if (!product) {
-      return sendError(res, 'Product not found', 404);
+      throw new NotFoundError('Product not found');
     }
 
     // Related products from same category
@@ -245,7 +247,9 @@ export const createProduct = async (req: Request, res: Response, next: NextFunct
 
     return sendSuccess(res, fullProduct, 'Product created successfully', 201);
   } catch (error) {
-    await transaction.rollback();
+    if (transaction && !(transaction as any).finished) {
+      await transaction.rollback();
+    }
     next(error);
   }
 };
@@ -256,7 +260,7 @@ export const updateProduct = async (req: Request, res: Response, next: NextFunct
     const product = await Product.findByPk(id);
 
     if (!product) {
-      return sendError(res, 'Product not found', 404);
+      throw new NotFoundError('Product not found');
     }
 
     if (req.body.name) {
@@ -287,7 +291,7 @@ export const deleteProduct = async (req: Request, res: Response, next: NextFunct
     const product = await Product.findByPk(id);
 
     if (!product) {
-      return sendError(res, 'Product not found', 404);
+      throw new NotFoundError('Product not found');
     }
 
     // Soft archive or full delete

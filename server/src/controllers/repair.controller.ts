@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { RepairRequest, RepairFile, RepairStatusHistory, RepairQuote, RepairQuoteItem, RepairMessage, sequelize } from '../models';
-import { sendSuccess, sendError } from '../utils/response.handler';
+import { sendSuccess } from '../utils/response.handler';
 import { generateRepairNumber } from '../utils/helpers.util';
+import { BadRequestError, NotFoundError } from '../errors';
 
 export const REPAIR_STAGES = [
   'Request Submitted',
@@ -83,7 +84,9 @@ export const submitRepairRequest = async (req: Request, res: Response, next: Nex
 
     return sendSuccess(res, repairRequest, 'Repair request submitted successfully', 201);
   } catch (error) {
-    await transaction.rollback();
+    if (transaction && !(transaction as any).finished) {
+      await transaction.rollback();
+    }
     next(error);
   }
 };
@@ -93,7 +96,7 @@ export const trackRepair = async (req: Request, res: Response, next: NextFunctio
     const { repairNumber, email } = req.query as { repairNumber?: string; email?: string };
 
     if (!repairNumber) {
-      return sendError(res, 'Repair number is required', 400);
+      throw new BadRequestError('Repair number is required');
     }
 
     const where: any = { repairNumber: repairNumber.trim() };
@@ -121,7 +124,7 @@ export const trackRepair = async (req: Request, res: Response, next: NextFunctio
     });
 
     if (!repair) {
-      return sendError(res, 'No repair ticket found matching the criteria', 404);
+      throw new NotFoundError('No repair ticket found matching the criteria');
     }
 
     const currentStageIndex = REPAIR_STAGES.indexOf(repair.status);
@@ -163,8 +166,7 @@ export const handleQuoteDecision = async (req: Request, res: Response, next: Nex
     });
 
     if (!quote) {
-      await transaction.rollback();
-      return sendError(res, 'Quotation not found', 404);
+      throw new NotFoundError('Quotation not found');
     }
 
     const repair = quote.repairRequest;
@@ -194,7 +196,9 @@ export const handleQuoteDecision = async (req: Request, res: Response, next: Nex
 
     return sendSuccess(res, { quote, repair }, `Repair quotation ${decision.toLowerCase()}d successfully`);
   } catch (error) {
-    await transaction.rollback();
+    if (transaction && !(transaction as any).finished) {
+      await transaction.rollback();
+    }
     next(error);
   }
 };
@@ -227,7 +231,7 @@ export const sendRepairMessage = async (req: Request, res: Response, next: NextF
 
     const repair = await RepairRequest.findByPk(repairId);
     if (!repair) {
-      return sendError(res, 'Repair request not found', 404);
+      throw new NotFoundError('Repair request not found');
     }
 
     let role = 'CUSTOMER';

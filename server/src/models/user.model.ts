@@ -1,7 +1,6 @@
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/database.config';
 import argon2 from 'argon2';
-import bcrypt from 'bcryptjs';
 
 export const User: any = sequelize.define('User', {
   id: {
@@ -74,16 +73,6 @@ User.prototype.comparePassword = async function (candidatePassword: string): Pro
   try {
     if (this.password && this.password.startsWith('$argon2id$')) {
       return await argon2.verify(this.password, candidatePassword);
-    }
-    if (this.password && (this.password.startsWith('$2a$') || this.password.startsWith('$2b$') || this.password.startsWith('$2y$'))) {
-      const isMatch = await bcrypt.compare(candidatePassword, this.password);
-      if (isMatch) {
-        // Gradual migration: rehash with Argon2id and update database
-        const newHash = await argon2.hash(candidatePassword, { type: argon2.argon2id });
-        this.password = newHash;
-        await this.save();
-      }
-      return isMatch;
     }
     return await argon2.verify(this.password, candidatePassword);
   } catch {

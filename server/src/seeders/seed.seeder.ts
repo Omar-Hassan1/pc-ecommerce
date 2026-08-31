@@ -20,44 +20,56 @@ export const seedDatabase = async (): Promise<void> => {
   try {
     await verifyAndConnect();
 
-    const userCount = await User.count();
+    // 1. Create/Update Default Users (Admin, Technician, Customer)
+    const [adminUser] = await User.findOrCreate({
+      where: { email: 'admin@nexora.com' },
+      defaults: {
+        firstName: 'Omar',
+        lastName: 'Admin',
+        email: 'admin@nexora.com',
+        password: 'Password123!',
+        role: 'ADMIN',
+        phone: '+1 (800) 555-0199'
+      }
+    });
+    adminUser.password = 'Password123!';
+    await adminUser.save();
 
-    if (userCount > 0) {
-      logger.info('[Seeder] Database already populated. Skipping seed.');
+    const [techUser] = await User.findOrCreate({
+      where: { email: 'tech@nexora.com' },
+      defaults: {
+        firstName: 'Omar',
+        lastName: 'Tech',
+        email: 'tech@nexora.com',
+        password: 'Password123!',
+        role: 'TECHNICIAN',
+        phone: '+1 (800) 555-0144'
+      }
+    });
+    techUser.password = 'Password123!';
+    await techUser.save();
+
+    const [customer] = await User.findOrCreate({
+      where: { email: 'customer@nexora.com' },
+      defaults: {
+        firstName: 'Omar',
+        lastName: 'Customer',
+        email: 'customer@nexora.com',
+        password: 'Password123!',
+        role: 'CUSTOMER',
+        phone: '+1 (555) 234-5678'
+      }
+    });
+    customer.password = 'Password123!';
+    await customer.save();
+
+    logger.info('[Seeder] Ensured default accounts (Admin: admin@nexora.com)');
+
+    const productCount = await Product.count();
+    if (productCount > 0) {
+      logger.info('[Seeder] Product catalog already seeded. Default users updated.');
       return;
     }
-
-    logger.info('[Seeder] Seeding database with realistic NEXORA COMPUTERS data...');
-
-    // 1. Create Default Users (Admin, Technician, Customer)
-    await User.create({
-      firstName: 'Omar',
-      lastName: 'Admin',
-      email: 'admin@nexora.com',
-      password: 'Password123!',
-      role: 'ADMIN',
-      phone: '+1 (800) 555-0199'
-    });
-
-    await User.create({
-      firstName: 'Omar',
-      lastName: 'Tech',
-      email: 'tech@nexora.com',
-      password: 'Password123!',
-      role: 'TECHNICIAN',
-      phone: '+1 (800) 555-0144'
-    });
-
-    const customer = await User.create({
-      firstName: 'Omar',
-      lastName: 'Customer',
-      email: 'customer@nexora.com',
-      password: 'Password123!',
-      role: 'CUSTOMER',
-      phone: '+1 (555) 234-5678'
-    });
-
-    logger.info('[Seeder] Created default accounts (Admin: admin@nexora.com)');
 
     // 2. Create Categories & Subcategories
     const computersCat = await Category.create({ name: 'Computers', slug: 'computers', description: 'Pre-built Gaming PCs & Desktop Workstations' });

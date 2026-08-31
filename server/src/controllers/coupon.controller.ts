@@ -1,13 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 import { Coupon } from '../models';
-import { sendSuccess, sendError } from '../utils/response.handler';
+import { sendSuccess } from '../utils/response.handler';
+import { BadRequestError, NotFoundError } from '../errors';
 
 export const validateCoupon = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   try {
     const { code, subtotal = 0 } = req.body;
 
     if (!code) {
-      return sendError(res, 'Coupon code is required', 400);
+      throw new BadRequestError('Coupon code is required');
     }
 
     const coupon = await Coupon.findOne({
@@ -15,19 +16,19 @@ export const validateCoupon = async (req: Request, res: Response, next: NextFunc
     });
 
     if (!coupon) {
-      return sendError(res, 'Invalid or expired coupon code', 404);
+      throw new NotFoundError('Invalid or expired coupon code');
     }
 
     if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) {
-      return sendError(res, 'Coupon code has expired', 400);
+      throw new BadRequestError('Coupon code has expired');
     }
 
     if (coupon.timesUsed >= coupon.usageLimit) {
-      return sendError(res, 'Coupon usage limit reached', 400);
+      throw new BadRequestError('Coupon usage limit reached');
     }
 
     if (subtotal < parseFloat(coupon.minPurchase)) {
-      return sendError(res, `Minimum purchase of $${coupon.minPurchase} required for this coupon`, 400);
+      throw new BadRequestError(`Minimum purchase of $${coupon.minPurchase} required for this coupon`);
     }
 
     let discount = 0;

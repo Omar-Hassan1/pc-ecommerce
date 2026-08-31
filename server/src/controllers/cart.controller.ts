@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { Cart, CartItem, Product, ProductImage } from '../models';
-import { sendSuccess, sendError } from '../utils/response.handler';
+import { sendSuccess } from '../utils/response.handler';
+import { NotFoundError, BadRequestError } from '../errors';
 
 export const getCart = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   try {
@@ -53,7 +54,7 @@ export const addToCart = async (req: Request, res: Response, next: NextFunction)
 
     const product = await Product.findByPk(productId);
     if (!product || !product.isActive) {
-      return sendError(res, 'Product not found or unavailable', 404);
+      throw new NotFoundError('Product not found or unavailable');
     }
 
     let cart: any;
@@ -66,7 +67,7 @@ export const addToCart = async (req: Request, res: Response, next: NextFunction)
         where: { sessionId }
       });
     } else {
-      return sendError(res, 'User authentication or session ID required', 400);
+      throw new BadRequestError('User authentication or session ID required');
     }
 
     let cartItem = await CartItem.findOne({
@@ -104,7 +105,7 @@ export const updateCartItem = async (req: Request, res: Response, next: NextFunc
 
     const cartItem = await CartItem.findByPk(itemId);
     if (!cartItem) {
-      return sendError(res, 'Cart item not found', 404);
+      throw new NotFoundError('Cart item not found');
     }
 
     if (quantity <= 0) {
@@ -127,7 +128,7 @@ export const removeCartItem = async (req: Request, res: Response, next: NextFunc
     const cartItem = await CartItem.findByPk(itemId);
 
     if (!cartItem) {
-      return sendError(res, 'Cart item not found', 404);
+      throw new NotFoundError('Cart item not found');
     }
 
     await cartItem.destroy();

@@ -21,12 +21,15 @@ export const sendError = (
   res: Response,
   message = 'Internal Server Error',
   statusCode = 500,
-  errors: any = null
+  errors: any = null,
+  code?: string
 ): Response => {
   const payload: Record<string, any> = {
     success: false,
     message,
+    ...(code && { code }),
     ...(errors && { errors })
   };
   return res.status(statusCode).json(payload);
 };
+
